@@ -14,6 +14,7 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
+import microsoft.prototype.cvprototype.app.NativeOpenCVClass;
 import microsoft.prototype.cvprototype.app.PermissionsManager;
 
 import static microsoft.prototype.cvprototype.app.PermissionsManager.Permission.CAMERA;
@@ -22,7 +23,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     private static final String TAG = MainActivity.class.getSimpleName();
     JavaCameraView javaCameraView;
-    Mat mat, imageGray, imageCanny;
+    Mat mat, imageGray;
 
     BaseLoaderCallback baseLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -46,6 +47,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         }else {
             Log.d(TAG, "OpenCV loaded");
         }
+
+        System.loadLibrary("MyOpenCVLibs");
     }
 
     @Override
@@ -96,20 +99,17 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     public void onCameraViewStarted(int width, int height) {
         this.mat = new Mat(height, width, CvType.CV_8UC4);
         this.imageGray = new Mat(height, width, CvType.CV_8UC1);
-        this.imageCanny = new Mat(height, width, CvType.CV_8UC1);
     }
 
     @Override
     public void onCameraViewStopped() {
         this.mat.release();
+        this.imageGray.release();
     }
 
     @Override
     public Mat onCameraFrame(Mat inputFrame) {
-        mat = inputFrame;
-
-        Imgproc.cvtColor(mat, imageGray, Imgproc.COLOR_RGB2GRAY);
-        Imgproc.Canny(imageGray, imageCanny, 50, 150);
-        return imageCanny;
+        NativeOpenCVClass.convertGray(this.mat.getNativeObjAddr(), this.imageGray.getNativeObjAddr());
+        return this.imageGray;
     }
 }
