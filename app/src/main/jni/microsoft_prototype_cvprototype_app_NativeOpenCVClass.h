@@ -9,6 +9,7 @@ using namespace std;
 
 #ifndef _Included_microsoft_prototype_cvprototype_app_NativeOpenCVClass
 #define _Included_microsoft_prototype_cvprototype_app_NativeOpenCVClass
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -19,9 +20,17 @@ extern "C" {
  */
 int toGray(Mat img, Mat &gray);
 
+void detect(Mat &frame, const char* face, const char* eyeglass);
+
 JNIEXPORT jint JNICALL Java_microsoft_prototype_cvprototype_app_NativeOpenCVClass_convertGray
         (JNIEnv *, jclass, jlong, jlong);
 
+
+JNIEXPORT void JNICALL
+Java_microsoft_prototype_cvprototype_app_NativeOpenCVClass_faceDetection(JNIEnv *env, jclass type,
+                                                                         jlong addrRgba,
+                                                                         jstring faceFileDir_,
+                                                                         jstring eyeglassFileDir_);
 #ifdef __cplusplus
 }
 #endif

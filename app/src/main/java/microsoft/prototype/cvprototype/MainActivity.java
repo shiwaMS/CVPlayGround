@@ -1,5 +1,6 @@
 package microsoft.prototype.cvprototype;
 
+import android.content.Context;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -14,16 +15,29 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 import microsoft.prototype.cvprototype.app.NativeOpenCVClass;
 import microsoft.prototype.cvprototype.app.PermissionsManager;
 
 import static microsoft.prototype.cvprototype.app.PermissionsManager.Permission.CAMERA;
+import static microsoft.prototype.cvprototype.app.PermissionsManager.Permission.WRITE_EXTERNAL_STORAGE;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
+    private static final String EYEGLASSES_FILE = "haarcascade_eye_tree_eyeglasses.xml";
+    private static final String FACE_FILE = "haarcascade_frontalface_alt.xml";
+
     JavaCameraView javaCameraView;
     Mat mat, imageGray;
+
+    private String eyeglassesFilePath;
+    private String faceFilePath;
 
     static {
         System.loadLibrary("MyOpenCVLibs");
@@ -55,7 +69,10 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         this.javaCameraView.setVisibility(SurfaceView.VISIBLE);
         this.javaCameraView.setCvCameraViewListener(this);
 
-        PermissionsManager.INSTANCE.requestPermissionsIfNotGranted(this, CAMERA);
+        this.eyeglassesFilePath = this.getFilePath(EYEGLASSES_FILE);
+        this.faceFilePath = this.getFilePath(FACE_FILE);
+
+        PermissionsManager.INSTANCE.requestPermissionsIfNotGranted(this, CAMERA, WRITE_EXTERNAL_STORAGE);
     }
 
 
@@ -106,9 +123,58 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     public Mat onCameraFrame(Mat inputFrame) {
         this.mat = inputFrame;
 
-        NativeOpenCVClass.convertGray(this.mat.getNativeObjAddr(), this.imageGray.getNativeObjAddr());
+//        NativeOpenCVClass.convertGray(this.mat.getNativeObjAddr(), this.imageGray.getNativeObjAddr());
 //        Imgproc.cvtColor(this.mat, imageGray, Imgproc.COLOR_RGBA2GRAY);
+        NativeOpenCVClass.faceDetection(this.mat.getNativeObjAddr(), this.faceFilePath, this.eyeglassesFilePath);
 
-        return this.imageGray;
+        return this.mat;
+    }
+
+
+    private String getFilePath(String targetFile) {
+        String filePath = "";
+        InputStream inputStream = null;
+        FileOutputStream fileOutputStream = null;
+
+        try {
+            File rootDir = getExternalFilesDir()
+            inputStream = this.getAssets().open(targetFile);
+
+            File file = new File(getFilesDir(), targetFile);
+            if (!file.exists()) {
+                file.createNewFile();
+                Log.d(TAG, "File created");
+            }
+
+            fileOutputStream = new FileOutputStream(file, false);
+
+            int read = 0;
+            byte[] bytes = new byte[1024];
+
+            while ((read = inputStream.read(bytes)) != -1) {
+                fileOutputStream.write(bytes, 0, read);
+            }
+
+            Log.d(TAG, "Write file finished");
+
+            filePath = file.getAbsolutePath();
+            Log.i(TAG, "File path: " + filePath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+
+                if (fileOutputStream != null) {
+                    fileOutputStream.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return filePath;
     }
 }

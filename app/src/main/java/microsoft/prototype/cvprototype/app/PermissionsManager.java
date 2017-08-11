@@ -18,7 +18,9 @@ public enum PermissionsManager {
     INSTANCE;
 
     public enum Permission {
-        CAMERA(0x01, Manifest.permission.CAMERA);
+        CAMERA(0x01, Manifest.permission.CAMERA),
+        WRITE_EXTERNAL_STORAGE(0x05, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
 
         int requestCode;
         String systemTag;
