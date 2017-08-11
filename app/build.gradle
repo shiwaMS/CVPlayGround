@@ -22,6 +22,12 @@ android {
         }
     }
 
+    externalNativeBuild {
+        ndkBuild {
+            path 'src/main/jni/Android.mk'
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -29,9 +35,14 @@ android {
         }
     }
 
-    externalNativeBuild {
-        ndkBuild {
-            path 'src/main/jni/Android.mk'
+    productFlavors {
+        general {
+            externalNativeBuild {
+                ndkBuild {
+                    arguments "NDK_PROJECT_PATH=build/intermediates/ndk"
+                    arguments "NDK_LIBS_OUT=src/main/jniLibs"
+                }
+            }
         }
     }
 }

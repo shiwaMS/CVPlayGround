@@ -19,18 +19,23 @@ import microsoft.prototype.cvprototype.app.PermissionsManager;
 
 import static microsoft.prototype.cvprototype.app.PermissionsManager.Permission.CAMERA;
 
-public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener{
+public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
     JavaCameraView javaCameraView;
     Mat mat, imageGray;
 
+    static {
+        System.loadLibrary("MyOpenCVLibs");
+    }
+
     BaseLoaderCallback baseLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
-            switch (status){
+            switch (status) {
                 case BaseLoaderCallback.SUCCESS:
-                    if(javaCameraView != null){
+                    if (javaCameraView != null) {
+                        Log.d(TAG, "javaCameraView enabled");
                         javaCameraView.enableView();
                     }
                     break;
@@ -40,16 +45,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             }
         }
     };
-
-    static {
-        if(!OpenCVLoader.initDebug()){
-            Log.d(TAG, "OpenCV not loaded");
-        }else {
-            Log.d(TAG, "OpenCV loaded");
-        }
-
-        System.loadLibrary("MyOpenCVLibs");
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,12 +63,12 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     protected void onResume() {
         super.onResume();
 
-        if(!OpenCVLoader.initDebug()){
+        if (!OpenCVLoader.initDebug()) {
             Log.d(TAG, "OpenCV not loaded");
-            this.baseLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
-        }else {
-            Log.d(TAG, "OpenCV loaded");
             OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_13, this, this.baseLoaderCallback);
+        } else {
+            Log.d(TAG, "OpenCV loaded");
+            this.baseLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
         }
     }
 
@@ -81,7 +76,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     protected void onPause() {
         super.onPause();
 
-        if(this.javaCameraView != null){
+        if (this.javaCameraView != null) {
             javaCameraView.disableView();
         }
     }
@@ -90,7 +85,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     protected void onDestroy() {
         super.onDestroy();
 
-        if(this.javaCameraView != null){
+        if (this.javaCameraView != null) {
             this.javaCameraView.disableView();
         }
     }
@@ -109,7 +104,11 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     @Override
     public Mat onCameraFrame(Mat inputFrame) {
+        this.mat = inputFrame;
+
         NativeOpenCVClass.convertGray(this.mat.getNativeObjAddr(), this.imageGray.getNativeObjAddr());
+//        Imgproc.cvtColor(this.mat, imageGray, Imgproc.COLOR_RGBA2GRAY);
+
         return this.imageGray;
     }
 }
