@@ -1,6 +1,7 @@
 package microsoft.prototype.cvprototype;
 
 import android.content.Context;
+import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -24,6 +25,7 @@ import java.io.OutputStream;
 import microsoft.prototype.cvprototype.app.NativeOpenCVClass;
 import microsoft.prototype.cvprototype.app.PermissionsManager;
 
+import static android.os.Environment.DIRECTORY_DOCUMENTS;
 import static microsoft.prototype.cvprototype.app.PermissionsManager.Permission.CAMERA;
 import static microsoft.prototype.cvprototype.app.PermissionsManager.Permission.WRITE_EXTERNAL_STORAGE;
 
@@ -133,46 +135,44 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     private String getFilePath(String targetFile) {
         String filePath = "";
-        InputStream inputStream = null;
-        FileOutputStream fileOutputStream = null;
+        Log.d(TAG, "targetFile: " + targetFile);
 
         try {
-            File rootDir = getExternalFilesDir()
-            inputStream = this.getAssets().open(targetFile);
+            String rootDirPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Temp";
+            File rootDir = new File(rootDirPath);
+            if (!rootDir.exists()) {
+                rootDir.mkdir();
+                Log.d(TAG, "rootDir created");
+            }
 
-            File file = new File(getFilesDir(), targetFile);
+            Log.d(TAG, "File rootDir getAbsolutePath: " + rootDirPath);
+
+            File file = new File(rootDir, targetFile);
             if (!file.exists()) {
                 file.createNewFile();
                 Log.d(TAG, "File created");
             }
 
-            fileOutputStream = new FileOutputStream(file, false);
+            InputStream is = this.getAssets().open(targetFile);
+            OutputStream os = new FileOutputStream(file, false);
+
+//            byte[] data = new byte[is.available()];
+//            is.read(data);
+//            os.write(data);
+//            is.close();
+//            os.close();
 
             int read = 0;
             byte[] bytes = new byte[1024];
 
-            while ((read = inputStream.read(bytes)) != -1) {
-                fileOutputStream.write(bytes, 0, read);
+            while ((read = is.read(bytes)) != -1) {
+                os.write(bytes, 0, read);
             }
 
             Log.d(TAG, "Write file finished");
-
-            filePath = file.getAbsolutePath();
-            Log.i(TAG, "File path: " + filePath);
+            Log.i(TAG, "File getAbsolutePath: " + file.getAbsolutePath());
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                if (inputStream != null) {
-                    inputStream.close();
-                }
-
-                if (fileOutputStream != null) {
-                    fileOutputStream.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
 
         return filePath;

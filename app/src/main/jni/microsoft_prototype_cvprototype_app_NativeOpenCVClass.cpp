@@ -51,12 +51,10 @@ Java_microsoft_prototype_cvprototype_app_NativeOpenCVClass_faceDetection(JNIEnv 
 void detect(Mat &frame, const char *face_name, const char *eyes_name) {
 //    String face_cascade_name(face_name);
 //    String eyes_cascade_name(eyes_name);
-    String face_cascade_name = "/data/user/0/microsoft.prototype.cvprototype/files/haarcascade_frontalface_alt.xml";
-    String eyes_cascade_name = "/data/user/0/microsoft.prototype.cvprototype/files/haarcascade_eye_tree_eyeglasses.xml";
+    String face_cascade_name = "/storage/emulated/0/Temp/haarcascade_frontalface_alt.xml";
+    String eyes_cascade_name = "/storage/emulated/0/Temp/haarcascade_eye_tree_eyeglasses.xml";
     CascadeClassifier face_cascade;
     CascadeClassifier eyes_cascade;
-    string window_name = "Capture - Face detection";
-
 
     // Load the cascades
     if (!face_cascade.load(face_cascade_name)) {
@@ -96,7 +94,5 @@ void detect(Mat &frame, const char *face_name, const char *eyes_name) {
             circle(frame, center, radius, Scalar(255, 0, 0), 4, 8, 0);
         }
     }
-    //-- Show what you got
-    imshow(window_name, frame);
 }
 
