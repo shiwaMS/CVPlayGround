@@ -2,6 +2,8 @@ package microsoft.prototype.cvprototype;
 
 import android.content.Context;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -40,6 +42,11 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     private String eyeglassesFilePath;
     private String faceFilePath;
+
+    private final Object matLock = new Object();
+
+    private HandlerThread detectThread;
+    private Handler detectHandler;
 
     static {
         System.loadLibrary("MyOpenCVLibs");
@@ -113,21 +120,34 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     public void onCameraViewStarted(int width, int height) {
         this.mat = new Mat(height, width, CvType.CV_8UC4);
         this.imageGray = new Mat(height, width, CvType.CV_8UC1);
+
+        this.detectThread = new HandlerThread("DetectThread");
+        this.detectThread.start();
+        this.detectHandler = new Handler(this.detectThread.getLooper());
     }
 
     @Override
     public void onCameraViewStopped() {
         this.mat.release();
         this.imageGray.release();
+
+        this.detectThread.quitSafely();
+        try {
+            this.detectThread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public Mat onCameraFrame(Mat inputFrame) {
-        this.mat = inputFrame;
-
 //        NativeOpenCVClass.convertGray(this.mat.getNativeObjAddr(), this.imageGray.getNativeObjAddr());
 //        Imgproc.cvtColor(this.mat, imageGray, Imgproc.COLOR_RGBA2GRAY);
-        NativeOpenCVClass.faceDetection(this.mat.getNativeObjAddr(), this.faceFilePath, this.eyeglassesFilePath);
+//
+//        this.detectHandler.post(() -> {
+            this.mat = inputFrame;
+            NativeOpenCVClass.faceDetection(this.mat.getNativeObjAddr(), this.faceFilePath, this.eyeglassesFilePath);
+//        });
 
         return this.mat;
     }
@@ -156,12 +176,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             InputStream is = this.getAssets().open(targetFile);
             OutputStream os = new FileOutputStream(file, false);
 
-//            byte[] data = new byte[is.available()];
-//            is.read(data);
-//            os.write(data);
-//            is.close();
-//            os.close();
-
             int read = 0;
             byte[] bytes = new byte[1024];
 
@@ -169,8 +183,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 os.write(bytes, 0, read);
             }
 
+            filePath = file.getAbsolutePath();
             Log.d(TAG, "Write file finished");
-            Log.i(TAG, "File getAbsolutePath: " + file.getAbsolutePath());
+            Log.i(TAG, "File getAbsolutePath: " + filePath);
         } catch (IOException e) {
             e.printStackTrace();
         }

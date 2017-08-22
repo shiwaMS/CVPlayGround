@@ -49,10 +49,10 @@ Java_microsoft_prototype_cvprototype_app_NativeOpenCVClass_faceDetection(JNIEnv 
 }
 
 void detect(Mat &frame, const char *face_name, const char *eyes_name) {
-//    String face_cascade_name(face_name);
-//    String eyes_cascade_name(eyes_name);
-    String face_cascade_name = "/storage/emulated/0/Temp/haarcascade_frontalface_alt.xml";
-    String eyes_cascade_name = "/storage/emulated/0/Temp/haarcascade_eye_tree_eyeglasses.xml";
+    String face_cascade_name(face_name);
+    String eyes_cascade_name(eyes_name);
+//    String face_cascade_name = "/storage/emulated/0/Temp/haarcascade_frontalface_alt.xml";
+//    String eyes_cascade_name = "/storage/emulated/0/Temp/haarcascade_eye_tree_eyeglasses.xml";
     CascadeClassifier face_cascade;
     CascadeClassifier eyes_cascade;
 
