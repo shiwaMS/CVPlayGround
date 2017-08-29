@@ -142,6 +142,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     public void onCameraViewStopped() {
         this.mat.release();
         this.imageGray.release();
+        this.faces.release();
 
         this.detectThread.quitSafely();
         try {
@@ -160,7 +161,10 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         this.mat = inputFrame;
 
         detectHandler.post(() -> {
+            long startTime = System.currentTimeMillis();
             NativeOpenCVClass.faceDetection(this.mat.getNativeObjAddr(), faces.getNativeObjAddr(), this.faceFilePath, this.eyeglassesFilePath);
+            long endTime = System.currentTimeMillis();
+            Log.i(TAG, String.valueOf((endTime - startTime) / 1000f) + " sec");
         });
 
         Rect[] facesArray = faces.toArray();

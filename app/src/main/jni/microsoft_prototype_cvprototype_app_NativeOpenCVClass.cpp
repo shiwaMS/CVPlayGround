@@ -44,6 +44,7 @@ Java_microsoft_prototype_cvprototype_app_NativeOpenCVClass_faceDetection(JNIEnv 
 
     Mat &frame = *(Mat *) addrRgba;
     Mat &faces = *(Mat *) addrFaces;
+
     detect(frame, faces, faceFileDir, eyeglassFileDir);
 
     env->ReleaseStringUTFChars(faceFileDir_, faceFileDir);
@@ -74,9 +75,13 @@ void detect(Mat &frame, Mat &faces, const char *face_name, const char *eyes_name
     cvtColor(frame, frame_gray, CV_BGR2GRAY);
     equalizeHist(frame_gray, frame_gray);
 
+
+    clock_t startTime = clock();
     //-- Detect faces
-    face_cascade.detectMultiScale(frame_gray, facesVec, 1.1, 2, 0 | CV_HAAR_SCALE_IMAGE, Size(30, 30));
+    face_cascade.detectMultiScale(frame_gray, facesVec, 1.2, 3, 0 | CV_HAAR_SCALE_IMAGE, Size(20, 20));
     faces = Mat(facesVec, true);
+    double secondsPassed = (clock() - startTime) / (double) CLOCKS_PER_SEC;
+    LOGD("MainActivity JNI detect: %lf", secondsPassed);
 
 //    for (size_t i = 0; i < faces.size(); i++) {
 //        Point center(faces[i].x + faces[i].width * 0.5, faces[i].y + faces[i].height * 0.5);
