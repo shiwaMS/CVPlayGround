@@ -14,8 +14,12 @@ import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.JavaCameraView;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfRect;
+import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
@@ -24,18 +28,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import microsoft.prototype.cvprototype.app.FileUtils;
 import microsoft.prototype.cvprototype.app.NativeOpenCVClass;
 import microsoft.prototype.cvprototype.app.PermissionsManager;
 
 import static android.os.Environment.DIRECTORY_DOCUMENTS;
+import static microsoft.prototype.cvprototype.app.FileUtils.EYEGLASSES_FILE;
+import static microsoft.prototype.cvprototype.app.FileUtils.FACE_FILE;
 import static microsoft.prototype.cvprototype.app.PermissionsManager.Permission.CAMERA;
 import static microsoft.prototype.cvprototype.app.PermissionsManager.Permission.WRITE_EXTERNAL_STORAGE;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
-    private static final String EYEGLASSES_FILE = "haarcascade_eye_tree_eyeglasses.xml";
-    private static final String FACE_FILE = "haarcascade_frontalface_alt.xml";
+    private static final Scalar FACE_RECT_COLOR = new Scalar(0, 255, 0, 255);
 
     JavaCameraView javaCameraView;
     Mat mat, imageGray;
@@ -44,6 +50,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private String faceFilePath;
 
     private final Object matLock = new Object();
+    private long frameCount;
+    private MatOfRect faces;
 
     private HandlerThread detectThread;
     private Handler detectHandler;
@@ -78,8 +86,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         this.javaCameraView.setVisibility(SurfaceView.VISIBLE);
         this.javaCameraView.setCvCameraViewListener(this);
 
-        this.eyeglassesFilePath = this.getFilePath(EYEGLASSES_FILE);
-        this.faceFilePath = this.getFilePath(FACE_FILE);
+        this.eyeglassesFilePath = FileUtils.getFilePath(this, EYEGLASSES_FILE);
+        this.faceFilePath = FileUtils.getFilePath(this, FACE_FILE);
+        this.faces = new MatOfRect();
 
         PermissionsManager.INSTANCE.requestPermissionsIfNotGranted(this, CAMERA, WRITE_EXTERNAL_STORAGE);
     }
@@ -124,6 +133,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         this.detectThread = new HandlerThread("DetectThread");
         this.detectThread.start();
         this.detectHandler = new Handler(this.detectThread.getLooper());
+
+        this.frameCount = 0;
+        this.faces = new MatOfRect();
     }
 
     @Override
@@ -144,52 +156,17 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 //        NativeOpenCVClass.convertGray(this.mat.getNativeObjAddr(), this.imageGray.getNativeObjAddr());
 //        Imgproc.cvtColor(this.mat, imageGray, Imgproc.COLOR_RGBA2GRAY);
 //
-//        this.detectHandler.post(() -> {
-            this.mat = inputFrame;
-            NativeOpenCVClass.faceDetection(this.mat.getNativeObjAddr(), this.faceFilePath, this.eyeglassesFilePath);
-//        });
+        this.frameCount++;
+        this.mat = inputFrame;
+
+        detectHandler.post(() -> {
+            NativeOpenCVClass.faceDetection(this.mat.getNativeObjAddr(), faces.getNativeObjAddr(), this.faceFilePath, this.eyeglassesFilePath);
+        });
+
+        Rect[] facesArray = faces.toArray();
+        for (int i = 0; i < facesArray.length; i++)
+            Core.rectangle(this.mat, facesArray[i].tl(), facesArray[i].br(), FACE_RECT_COLOR, 3);
 
         return this.mat;
-    }
-
-
-    private String getFilePath(String targetFile) {
-        String filePath = "";
-        Log.d(TAG, "targetFile: " + targetFile);
-
-        try {
-            String rootDirPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Temp";
-            File rootDir = new File(rootDirPath);
-            if (!rootDir.exists()) {
-                rootDir.mkdir();
-                Log.d(TAG, "rootDir created");
-            }
-
-            Log.d(TAG, "File rootDir getAbsolutePath: " + rootDirPath);
-
-            File file = new File(rootDir, targetFile);
-            if (!file.exists()) {
-                file.createNewFile();
-                Log.d(TAG, "File created");
-            }
-
-            InputStream is = this.getAssets().open(targetFile);
-            OutputStream os = new FileOutputStream(file, false);
-
-            int read = 0;
-            byte[] bytes = new byte[1024];
-
-            while ((read = is.read(bytes)) != -1) {
-                os.write(bytes, 0, read);
-            }
-
-            filePath = file.getAbsolutePath();
-            Log.d(TAG, "Write file finished");
-            Log.i(TAG, "File getAbsolutePath: " + filePath);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return filePath;
     }
 }

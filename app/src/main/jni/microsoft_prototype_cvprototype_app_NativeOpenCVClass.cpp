@@ -36,19 +36,21 @@ int toGray(Mat img, Mat &gray) {
 JNIEXPORT void JNICALL
 Java_microsoft_prototype_cvprototype_app_NativeOpenCVClass_faceDetection(JNIEnv *env, jclass type,
                                                                          jlong addrRgba,
+                                                                         jlong addrFaces,
                                                                          jstring faceFileDir_,
                                                                          jstring eyeglassFileDir_) {
     const char *faceFileDir = env->GetStringUTFChars(faceFileDir_, 0);
     const char *eyeglassFileDir = env->GetStringUTFChars(eyeglassFileDir_, 0);
 
     Mat &frame = *(Mat *) addrRgba;
-    detect(frame, faceFileDir, eyeglassFileDir);
+    Mat &faces = *(Mat *) addrFaces;
+    detect(frame, faces, faceFileDir, eyeglassFileDir);
 
     env->ReleaseStringUTFChars(faceFileDir_, faceFileDir);
     env->ReleaseStringUTFChars(eyeglassFileDir_, eyeglassFileDir);
 }
 
-void detect(Mat &frame, const char *face_name, const char *eyes_name) {
+void detect(Mat &frame, Mat &faces, const char *face_name, const char *eyes_name) {
     String face_cascade_name(face_name);
     String eyes_cascade_name(eyes_name);
 //    String face_cascade_name = "/storage/emulated/0/Temp/haarcascade_frontalface_alt.xml";
@@ -66,20 +68,20 @@ void detect(Mat &frame, const char *face_name, const char *eyes_name) {
 //        return;
 //    };
 
-
-    std::vector<Rect> faces;
     Mat frame_gray;
+    std::vector<Rect> facesVec;
 
     cvtColor(frame, frame_gray, CV_BGR2GRAY);
     equalizeHist(frame_gray, frame_gray);
 
     //-- Detect faces
-    face_cascade.detectMultiScale(frame_gray, faces, 1.1, 2, 0 | CV_HAAR_SCALE_IMAGE, Size(30, 30));
+    face_cascade.detectMultiScale(frame_gray, facesVec, 1.1, 2, 0 | CV_HAAR_SCALE_IMAGE, Size(30, 30));
+    faces = Mat(facesVec, true);
 
-    for (size_t i = 0; i < faces.size(); i++) {
-        Point center(faces[i].x + faces[i].width * 0.5, faces[i].y + faces[i].height * 0.5);
-        ellipse(frame, center, Size(faces[i].width * 0.5, faces[i].height * 0.5), 0, 0, 360,
-                Scalar(255, 0, 255), 4, 8, 0);
+//    for (size_t i = 0; i < faces.size(); i++) {
+//        Point center(faces[i].x + faces[i].width * 0.5, faces[i].y + faces[i].height * 0.5);
+//        ellipse(frame, center, Size(faces[i].width * 0.5, faces[i].height * 0.5), 0, 0, 360,
+//                Scalar(255, 0, 255), 4, 8, 0);
 
 //        Mat faceROI = frame_gray(faces[i]);
 //        std::vector<Rect> eyes;
@@ -93,6 +95,6 @@ void detect(Mat &frame, const char *face_name, const char *eyes_name) {
 //            int radius = cvRound((eyes[j].width + eyes[j].height) * 0.25);
 //            circle(frame, center, radius, Scalar(255, 0, 0), 4, 8, 0);
 //        }
-    }
+//    }
 }
 

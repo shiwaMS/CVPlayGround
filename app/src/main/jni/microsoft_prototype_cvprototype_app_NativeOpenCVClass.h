@@ -20,7 +20,7 @@ extern "C" {
  */
 int toGray(Mat img, Mat &gray);
 
-void detect(Mat &frame, const char* face, const char* eyeglass);
+void detect(Mat &frame, Mat &faces, const char *face, const char *eyeglass);
 
 JNIEXPORT jint JNICALL Java_microsoft_prototype_cvprototype_app_NativeOpenCVClass_convertGray
         (JNIEnv *, jclass, jlong, jlong);
@@ -29,6 +29,7 @@ JNIEXPORT jint JNICALL Java_microsoft_prototype_cvprototype_app_NativeOpenCVClas
 JNIEXPORT void JNICALL
 Java_microsoft_prototype_cvprototype_app_NativeOpenCVClass_faceDetection(JNIEnv *env, jclass type,
                                                                          jlong addrRgba,
+                                                                         jlong addrFaces,
                                                                          jstring faceFileDir_,
                                                                          jstring eyeglassFileDir_);
 #ifdef __cplusplus
